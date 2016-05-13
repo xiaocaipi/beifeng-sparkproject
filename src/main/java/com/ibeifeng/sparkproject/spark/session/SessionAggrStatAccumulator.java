@@ -75,7 +75,7 @@ public class SessionAggrStatAccumulator implements AccumulatorParam<String> {
 	 * @return 更新以后的连接串
 	 */
 	private String add(String v1, String v2) {
-		// 校验：v1为空的话，直接返回v2
+		// 校验：v1为空的话，直接返回v2  有可能第一次校验的时候v1 是空 v2 是一个字符串
 		if(StringUtils.isEmpty(v1)) {
 			return v2;
 		}
