@@ -1,0 +1,7 @@
+.*
+!.gitignore
+/target
+*/target/*
+/crawler_db_info
+/logs
+derby.log
