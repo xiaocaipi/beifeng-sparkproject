@@ -145,6 +145,7 @@ public class UserVisitSessionAnalyzeSpark {
 		 * 
 		 * 重构完以后，actionRDD，就只在最开始，使用一次，用来生成以sessionid为key的RDD
 		 * 
+		 * 
 		 */
 		JavaRDD<Row> actionRDD = SparkUtils.getActionRDDByDateRange(sqlContext, taskParam);
 		JavaPairRDD<String, Row> sessionid2actionRDD = getSessionid2ActionRDD(actionRDD);
@@ -2003,7 +2004,7 @@ public class UserVisitSessionAnalyzeSpark {
 						long categoryid = tuple._1;
 						Optional<Long> optional = tuple._2._2;
 						long clickCount = 0L;
-						
+						//如果是有值的
 						if(optional.isPresent()) {
 							clickCount = optional.get();
 						}
