@@ -5,7 +5,7 @@ import org.apache.spark.sql.api.java.UDF3;
 /**
  * 将两个字段拼接起来（使用指定的分隔符）
  * @author Administrator
- *
+ *继承UDF3  因为要传进来3个参数
  */
 public class ConcatLongStringUDF implements UDF3<Long, String, String, String> {
 

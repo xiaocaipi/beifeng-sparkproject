@@ -51,7 +51,8 @@ public class AreaTop3ProductSpark {
 //		sqlContext.setConf("spark.sql.shuffle.partitions", "1000"); 
 //		sqlContext.setConf("spark.sql.autoBroadcastJoinThreshold", "20971520");
 		
-		// 注册自定义函数
+		// 注册自定义函数 
+		//名字  函数   返回类型
 		sqlContext.udf().register("concat_long_string", 
 				new ConcatLongStringUDF(), DataTypes.StringType);
 		sqlContext.udf().register("get_json_object", 

@@ -527,7 +527,7 @@ public class UserVisitSessionAnalyzeSpark {
 				});
 		
 		// 查询所有用户数据，并映射成<userid,Row>的格式
-		String sql = "select * from user_info";  
+		String sql = "select * from sale.user_info";  
 		JavaRDD<Row> userInfoRDD = sqlContext.sql(sql).javaRDD();
 		
 		JavaPairRDD<Long, Row> userid2InfoRDD = userInfoRDD.mapToPair(
@@ -636,10 +636,10 @@ public class UserVisitSessionAnalyzeSpark {
 //				});
 		
 		/**
-		 * sample采样倾斜key单独进行join
+		 * sample采样倾斜key单独进行join  是否要替换   采样比例    随机种子
 		 */
 		
-//		JavaPairRDD<Long, String> sampledRDD = userid2PartAggrInfoRDD.sample(false, 0.1, 9);
+		JavaPairRDD<Long, String> sampledRDD = userid2PartAggrInfoRDD.sample(false, 0.1, 9);
 //		
 //		JavaPairRDD<Long, Long> mappedSampledRDD = sampledRDD.mapToPair(
 //				

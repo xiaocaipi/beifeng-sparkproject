@@ -83,7 +83,7 @@ public class GroupConcatDistinctUDAF extends UserDefinedAggregateFunction {
 				// 1:北京,2:上海
 				bufferCityInfo += "," + cityInfo;
 			}
-			
+			//拼接完了之后用buffer 更新到缓存里面去
 			buffer.update(0, bufferCityInfo);  
 		}
 	}

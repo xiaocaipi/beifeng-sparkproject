@@ -70,6 +70,7 @@ public class SparkUtils {
 			SQLContext sqlContext, JSONObject taskParam) {
 		String startDate = ParamUtils.getParam(taskParam, Constants.PARAM_START_DATE);
 		String endDate = ParamUtils.getParam(taskParam, Constants.PARAM_END_DATE);
+		boolean local = ConfigurationManager.getBoolean(Constants.SPARK_LOCAL);
 		
 		String sql = 
 				"select * "
@@ -77,6 +78,14 @@ public class SparkUtils {
 				+ "where date>='" + startDate + "' "
 				+ "and date<='" + endDate + "'";  
 //				+ "and session_id not in('','','')"
+		if(!local){
+			sql = 
+					"select * "
+					+ "from sale.user_visit_action "
+					+ "where date>='" + startDate + "' "
+					+ "and date<='" + endDate + "'";  
+		}
+		
 		
 		DataFrame actionDF = sqlContext.sql(sql);
 		

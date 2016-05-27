@@ -92,7 +92,8 @@ public class PageOneStepConvertRateSpark {
 		Map<String, Object> pageSplitPvMap = pageSplitRDD.countByKey();
 		
 		// 使用者指定的页面流是3,2,5,8,6
-		// 咱们现在拿到的这个pageSplitPvMap，3->2，2->5，5->8，8->6
+		// 咱们现在拿到的这个pageSplitPvMap，3->2 pv，2->5 pv，5->8 pv，8->6 pv
+		//获取初始页面的pv
 		long startPagePv = getStartPagePv(taskParam, sessionid2actionsRDD);
 		
 		// 计算目标页面流的各个页面切片的转化率
