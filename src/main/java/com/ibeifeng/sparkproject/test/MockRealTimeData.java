@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
+import com.ibeifeng.sparkproject.conf.ConfigurationManager;
+import com.ibeifeng.sparkproject.constant.Constants;
+
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
@@ -29,9 +32,10 @@ public class MockRealTimeData extends Thread {
 	}
 	
 	private ProducerConfig createProducerConfig() {
+		String kafkaBroker = ConfigurationManager.getProperty(Constants.KAFKA_METADATA_BROKER_LIST);
 		Properties props = new Properties();
 		props.put("serializer.class", "kafka.serializer.StringEncoder");
-		props.put("metadata.broker.list", "192.168.1.105:9092,192.168.1.106:9092,192.168.1.107:9092");  
+		props.put("metadata.broker.list", kafkaBroker);  
 		return new ProducerConfig(props);
 	}
 	

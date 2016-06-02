@@ -78,4 +78,8 @@ public interface Constants {
 	String PARAM_CATEGORY_IDS = "categoryIds";
 	String PARAM_TARGET_PAGE_FLOW = "targetPageFlow";
 	
+	
+	String HDFS_STREAMING_CHECKPOINT_PATH ="hdfsStreamingCheckPointPath";
+	
+	
 }

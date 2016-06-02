@@ -62,12 +62,14 @@ public class AdClickRealTimeStatSpark {
 	public static void main(String[] args) {
 		// 构建Spark Streaming上下文
 		SparkConf conf = new SparkConf()       
-				.setMaster("local[2]")
+//				.setMaster("local[2]")
 				.setAppName("AdClickRealTimeStatSpark");
 //				.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 //				.set("spark.default.parallelism", "1000");
 //				.set("spark.streaming.blockInterval", "50");    
 //				.set("spark.streaming.receiver.writeAheadLog.enable", "true");   
+		
+		String hdfsPath = ConfigurationManager.getProperty(Constants.HDFS_STREAMING_CHECKPOINT_PATH);
 		
 		// spark streaming的上下文是构建JavaStreamingContext对象
 		// 而不是像之前的JavaSparkContext、SQLContext/HiveContext
@@ -85,7 +87,7 @@ public class AdClickRealTimeStatSpark {
 		// 每隔5秒钟，咱们的spark streaming作业就会收集最近5秒内的数据源接收过来的数据
 		JavaStreamingContext jssc = new JavaStreamingContext(
 				conf, Durations.seconds(5));  
-		jssc.checkpoint("hdfs://192.168.1.105:9000/streaming_checkpoint");
+		jssc.checkpoint(hdfsPath);
 		
 		// 正式开始进行代码的编写
 		// 实现咱们需要的实时计算的业务逻辑和功能
@@ -151,8 +153,11 @@ public class AdClickRealTimeStatSpark {
 	
 	@SuppressWarnings("unused")
 	private static void testDriverHA() {
-		final String checkpointDir = "hdfs://192.168.1.105:9090/streaming_checkpoint";
+		String hdfsPath = ConfigurationManager.getProperty(Constants.HDFS_STREAMING_CHECKPOINT_PATH);
+		final String checkpointDir = hdfsPath;
 		
+		//第一次启动的时候会去执行这个代码，创建sparkstreaming context
+		//如果挂掉了，重新起来 发现checkpoint目录有数据了  从中读取元数据信息 恢复出来一个ssc
 		JavaStreamingContextFactory contextFactory = new JavaStreamingContextFactory() {
 			
 			@Override 
@@ -163,6 +168,7 @@ public class AdClickRealTimeStatSpark {
 				
 				JavaStreamingContext jssc = new JavaStreamingContext(
 						conf, Durations.seconds(5));  
+				//必须要设置一个checkpoint目录
 				jssc.checkpoint(checkpointDir);
 				
 				Map<String, String> kafkaParams = new HashMap<String, String>();
@@ -381,6 +387,15 @@ public class AdClickRealTimeStatSpark {
 					private static final long serialVersionUID = 1L;
 
 					@Override
+					//dstream.foreachRDD { rdd =>
+					//  rdd.foreachPartition { partitionOfRecords =>
+					//    val connection = createNewConnection()
+					//    partitionOfRecords.foreach(record => connection.send(record))
+					//    connection.close()
+					//  }
+					//}
+					//对iterator  进行遍历就相当于是  partitionOfRecords.foreach
+
 					public void call(Iterator<Tuple2<String, Long>> iterator) throws Exception {
 						// 对每个分区的数据就去获取一次连接对象
 						// 每次都是从连接池中获取，而不是每次都创建

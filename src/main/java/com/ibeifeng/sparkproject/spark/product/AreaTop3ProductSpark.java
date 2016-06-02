@@ -133,7 +133,7 @@ public class AreaTop3ProductSpark {
 				"SELECT "
 					+ "city_id,"
 					+ "click_product_id product_id "
-				+ "FROM user_visit_action "
+				+ "FROM sale.user_visit_action "
 				+ "WHERE click_product_id IS NOT NULL "			
 				+ "AND date>='" + startDate + "' "
 				+ "AND date<='" + endDate + "'";
@@ -186,6 +186,7 @@ public class AreaTop3ProductSpark {
 		options.put("dbtable", "city_info");  
 		options.put("user", user);  
 		options.put("password", password);  
+		options.put("driver", "com.mysql.jdbc.Driver");
 		
 		// 通过SQLContext去从MySQL中查询数据
 		DataFrame cityInfoDF = sqlContext.read().format("jdbc")
@@ -360,9 +361,11 @@ public class AreaTop3ProductSpark {
 					+ "pi.product_name,"
 					+ "if(get_json_object(pi.extend_info,'product_status')='0','Self','Third Party') product_status "
 				+ "FROM tmp_area_product_click_count tapcc "
-				+ "JOIN product_info pi ON tapcc.product_id=pi.product_id ";
+				+ "JOIN sale.product_info pi ON tapcc.product_id=pi.product_id ";
 		
+		//、随机key与扩容表：Spark SQL+Spark Core
 //		JavaRDD<Row> rdd = sqlContext.sql("select * from product_info").javaRDD();
+		//扩容
 //		JavaRDD<Row> flattedRDD = rdd.flatMap(new FlatMapFunction<Row, Row>() {
 //
 //			private static final long serialVersionUID = 1L;
@@ -439,6 +442,7 @@ public class AreaTop3ProductSpark {
 		// case when
 		// 根据多个条件，不同的条件对应不同的值
 		// case when then ... when then ... else ... end
+		//本地模式下开窗函数不能跑起来 要有hive 才可以
 		
 		String sql = 
 				"SELECT "
