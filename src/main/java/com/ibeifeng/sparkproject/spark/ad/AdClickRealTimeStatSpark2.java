@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import kafka.serializer.StringDecoder;
 
@@ -57,7 +58,7 @@ import com.ibeifeng.sparkproject.util.DateUtils;
  * @author Administrator
  *
  */
-public class AdClickRealTimeStatSpark {
+public class AdClickRealTimeStatSpark2 {
     
 	public static void main(String[] args) {
 		// 构建Spark Streaming上下文
@@ -127,23 +128,25 @@ public class AdClickRealTimeStatSpark {
 		JavaPairDStream<String, String> filteredAdRealTimeLogDStream = 
 				filterByBlacklist(adRealTimeLogDStream);
 		
+		filteredAdRealTimeLogDStream.print();
+		
 		// 生成动态黑名单
-		generateDynamicBlacklist(filteredAdRealTimeLogDStream);
-		
-		// 业务功能一：计算广告点击流量实时统计结果（yyyyMMdd_province_city_adid,clickCount） 
-		// 最粗
-		JavaPairDStream<String, Long> adRealTimeStatDStream = calculateRealTimeStat(
-				filteredAdRealTimeLogDStream);
-		
-		// 业务功能二：实时统计每天每个省份top3热门广告
-		// 统计的稍微细一些了
-		calculateProvinceTop3Ad(adRealTimeStatDStream);  
-		
-		// 业务功能三：实时统计每天每个广告在最近1小时的滑动窗口内的点击趋势（每分钟的点击量）
-		// 统计的非常细了
-		// 我们每次都可以看到每个广告，最近一小时内，每分钟的点击量
-		// 每支广告的点击趋势
-		calculateAdClickCountByWindow(adRealTimeLogDStream);  
+//		generateDynamicBlacklist(filteredAdRealTimeLogDStream);
+//		
+//		// 业务功能一：计算广告点击流量实时统计结果（yyyyMMdd_province_city_adid,clickCount） 
+//		// 最粗
+//		JavaPairDStream<String, Long> adRealTimeStatDStream = calculateRealTimeStat(
+//				filteredAdRealTimeLogDStream);
+//		
+//		// 业务功能二：实时统计每天每个省份top3热门广告
+//		// 统计的稍微细一些了
+//		calculateProvinceTop3Ad(adRealTimeStatDStream);  
+//		
+//		// 业务功能三：实时统计每天每个广告在最近1小时的滑动窗口内的点击趋势（每分钟的点击量）
+//		// 统计的非常细了
+//		// 我们每次都可以看到每个广告，最近一小时内，每分钟的点击量
+//		// 每支广告的点击趋势
+//		calculateAdClickCountByWindow(adRealTimeLogDStream);  
 		
 		// 构建完spark streaming上下文之后，记得要进行上下文的启动、等待执行结束、关闭
 		jssc.start();
@@ -232,10 +235,6 @@ public class AdClickRealTimeStatSpark {
 							JavaPairRDD<String, String> rdd) throws Exception {
 						
 						// 首先，从mysql中查询所有黑名单用户，将其转换为一个rdd
-						//textfile parallize  等输入是转换到 spark 空间 executor 里面
-						//JavaPairRDD<Long, Boolean> blacklistRDD = sc.parallelizePairs(tuples);   是转换到executor
-						//adRealTimeLogDStream.transformToPair  转换成rdd ，这个rdd 的算子操作才在executor里面执行  rdd.mapToPair 在executor里面执行
-						//IAdBlacklistDAO adBlacklistDAO = DAOFactory.getAdBlacklistDAO(); 在driver 执行
 						IAdBlacklistDAO adBlacklistDAO = DAOFactory.getAdBlacklistDAO();
 						List<AdBlacklist> adBlacklists = adBlacklistDAO.findAll();
 						
@@ -244,6 +243,8 @@ public class AdClickRealTimeStatSpark {
 						for(AdBlacklist adBlacklist : adBlacklists) {
 							tuples.add(new Tuple2<Long, Boolean>(adBlacklist.getUserid(), true));  
 						}
+						
+						Logger.getLogger("aaa").info("1111111111111111111111111111");
 						
 						JavaSparkContext sc = new JavaSparkContext(rdd.context());
 						JavaPairRDD<Long, Boolean> blacklistRDD = sc.parallelizePairs(tuples);
@@ -257,6 +258,7 @@ public class AdClickRealTimeStatSpark {
 							public Tuple2<Long, Tuple2<String, String>> call(  
 									Tuple2<String, String> tuple)
 									throws Exception {
+								Logger.getLogger("aaa").info("222222222222222222222");
 								String log = tuple._2;
 								String[] logSplited = log.split(" "); 
 								long userid = Long.valueOf(logSplited[3]);
