@@ -63,7 +63,7 @@ public class AdClickRealTimeStatSpark2 {
 	public static void main(String[] args) {
 		// 构建Spark Streaming上下文
 		SparkConf conf = new SparkConf()       
-//				.setMaster("local[2]")
+				.setMaster("local[2]")
 				.setAppName("AdClickRealTimeStatSpark");
 //				.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 //				.set("spark.default.parallelism", "1000");
@@ -121,14 +121,14 @@ public class AdClickRealTimeStatSpark2 {
 				StringDecoder.class, 
 				kafkaParams, 
 				topics);
-		
+		adRealTimeLogDStream.print();
 //		adRealTimeLogDStream.repartition(1000);
 		
 		// 根据动态黑名单进行数据过滤
-		JavaPairDStream<String, String> filteredAdRealTimeLogDStream = 
-				filterByBlacklist(adRealTimeLogDStream);
-		
-		filteredAdRealTimeLogDStream.print();
+//		JavaPairDStream<String, String> filteredAdRealTimeLogDStream =
+//				filterByBlacklist(adRealTimeLogDStream);
+//
+//		filteredAdRealTimeLogDStream.print();
 		
 		// 生成动态黑名单
 //		generateDynamicBlacklist(filteredAdRealTimeLogDStream);

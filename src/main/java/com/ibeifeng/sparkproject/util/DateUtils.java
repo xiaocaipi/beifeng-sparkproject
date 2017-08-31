@@ -119,7 +119,7 @@ public class DateUtils {
 	 * @return 格式化后的日期
 	 */
 	public static String formatDate(Date date) {
-		return DATE_FORMAT.format(date);
+		return new SimpleDateFormat("yyyy-MM-dd").format(date);
 	}
 	
 	/**
@@ -136,9 +136,9 @@ public class DateUtils {
 	 * @param time 时间字符串 
 	 * @return Date
 	 */
-	public static Date parseTime(String time) {
+	public  static Date parseTime(String time) {
 		try {
-			return TIME_FORMAT.parse(time);
+			return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(time);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -151,7 +151,7 @@ public class DateUtils {
 	 * @return
 	 */
 	public static String formatDateKey(Date date) {
-		return DATEKEY_FORMAT.format(date);
+		return new SimpleDateFormat("yyyyMMdd").format(date);
 	}
 	
 	/**
@@ -161,7 +161,7 @@ public class DateUtils {
 	 */
 	public static Date parseDateKey(String datekey) {
 		try {
-			return DATEKEY_FORMAT.parse(datekey);
+			return new SimpleDateFormat("yyyyMMdd").parse(datekey);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -176,6 +176,11 @@ public class DateUtils {
 	 */
 	public static String formatTimeMinute(Date date) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");  
+		return sdf.format(date);
+	}
+
+	public static String formatTimeSecond(Date date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 		return sdf.format(date);
 	}
 	

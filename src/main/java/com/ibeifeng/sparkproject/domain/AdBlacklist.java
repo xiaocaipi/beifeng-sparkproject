@@ -1,11 +1,13 @@
 package com.ibeifeng.sparkproject.domain;
 
+import java.io.Serializable;
+
 /**
  * 广告黑名单
  * @author Administrator
  *
  */
-public class AdBlacklist {
+public class AdBlacklist implements Serializable {
 
 	private long userid;
 

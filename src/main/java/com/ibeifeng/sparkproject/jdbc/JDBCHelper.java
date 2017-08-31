@@ -1,14 +1,20 @@
 package com.ibeifeng.sparkproject.jdbc;
 
+import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.ibeifeng.sparkproject.conf.ConfigurationManager;
 import com.ibeifeng.sparkproject.constant.Constants;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.hive.common.FileUtils;
 
 /**
  * JDBC辅助组件
@@ -72,7 +78,7 @@ public class JDBCHelper {
 	}
 	
 	// 数据库连接池
-	private LinkedList<Connection> datasource = new LinkedList<Connection>();
+	private ConcurrentLinkedQueue<Connection> datasource = new ConcurrentLinkedQueue<Connection>();
 	
 	/**
 	 * 
@@ -90,7 +96,7 @@ public class JDBCHelper {
 		// 这个，可以通过在配置文件中配置的方式，来灵活的设定
 		int datasourceSize = ConfigurationManager.getInteger(
 				Constants.JDBC_DATASOURCE_SIZE);
-		
+
 		// 然后创建指定数量的数据库连接，并放入数据库连接池中
 		for(int i = 0; i < datasourceSize; i++) {
 			boolean local = ConfigurationManager.getBoolean(Constants.SPARK_LOCAL);
@@ -110,7 +116,8 @@ public class JDBCHelper {
 			
 			try {
 				Connection conn = DriverManager.getConnection(url, user, password);
-				datasource.push(conn);  
+				datasource.add(conn);
+				System.out.println(this.getClass()+"---method JDBCHelper:"+Thread.currentThread()+"datasource size="+datasource.size());
 			} catch (Exception e) {
 				e.printStackTrace(); 
 			}
@@ -124,14 +131,20 @@ public class JDBCHelper {
 	 * 
 	 */
 	public synchronized Connection getConnection() {
+		JDBCHelper.writeThread(this.getClass().getName(),"getConnection begin "+" datasource size ="+datasource.size(),Thread.currentThread().getName());
+
 		while(datasource.size() == 0) {
 			try {
+				JDBCHelper.writeThread(this.getClass().getName(),"getConnection waiting "+" datasource size ="+datasource.size(),Thread.currentThread().getName());
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}  
 		}
-		return datasource.poll();
+		Connection conn = datasource.poll();
+		boolean isconnNull = conn ==null;
+		JDBCHelper.writeThread(this.getClass().getName(),"getConnection end "+"is conn is null :"+isconnNull+"  datasource size ="+datasource.size(),Thread.currentThread().getName());
+		return conn;
 	}
 	
 	/**
@@ -168,10 +181,10 @@ public class JDBCHelper {
 			
 			conn.commit();
 		} catch (Exception e) {
-			e.printStackTrace();  
+			e.printStackTrace();
 		} finally {
 			if(conn != null) {
-				datasource.push(conn);  
+				datasource.add(conn);
 			}
 		}
 		
@@ -204,10 +217,11 @@ public class JDBCHelper {
 			
 			callback.process(rs);  
 		} catch (Exception e) {
+			JDBCHelper.writeThread(this.getClass().getName(),"executeQuery  : exception ",Thread.currentThread().getName());
 			e.printStackTrace();
 		} finally {
 			if(conn != null) {
-				datasource.push(conn);  
+				datasource.add(conn);
 			}
 		}
 	}
@@ -235,7 +249,6 @@ public class JDBCHelper {
 		int[] rtn = null;
 		Connection conn = null;
 		PreparedStatement pstmt = null;
-		
 		try {
 			conn = getConnection();
 			
@@ -260,10 +273,11 @@ public class JDBCHelper {
 			// 最后一步：使用Connection对象，提交批量的SQL语句
 			conn.commit();
 		} catch (Exception e) {
+			System.out.println(sql);
 			e.printStackTrace();  
 		} finally {
 			if(conn != null) {
-				datasource.push(conn);  
+				datasource.add(conn);
 			}
 		}
 		
@@ -284,6 +298,73 @@ public class JDBCHelper {
 		 */
 		void process(ResultSet rs) throws Exception;
 		
+	}
+
+
+	public static  synchronized void writeThread(String className,String method,String threadName){
+
+		if("Executor task launch worker-0".equals(threadName)){
+			String context = getCurrentTime()+"---"+className+"---"+method+"---";
+			formatFlie("/tmp/thread/thread-0.txt",context+ "\n",false);
+		}
+		if("Executor task launch worker-1".equals(threadName)){
+			String context = getCurrentTime()+"---"+className+"---"+method+"---";
+			formatFlie("/tmp/thread/thread-1.txt",context+ "\n",false);
+		}
+		if("Executor task launch worker-2".equals(threadName)){
+			String context = getCurrentTime()+"---"+className+"---"+method+"---";
+			formatFlie("/tmp/thread/thread-2.txt",context+ "\n",false);
+		}
+		if("Executor task launch worker-3".equals(threadName)){
+			String context = getCurrentTime()+"---"+className+"---"+method+"---";
+			formatFlie("/tmp/thread/thread-3.txt",context+ "\n",false);
+		}
+
+
+	}
+
+	public static void formatFlie(String fileName, String context,boolean exitIsdelete) {
+		File f = new File(fileName);
+		File parentDirectory = new File(f.getParent());
+
+		if(!parentDirectory.exists()&& !parentDirectory .isDirectory()){
+			parentDirectory.mkdir();
+		}
+
+		if(f.exists()){
+			if(exitIsdelete){
+				f.delete();
+			}
+		}
+		if (!f.exists()) {
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		BufferedWriter output = null;
+		try {
+			output = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(fileName, true)));
+			output.write(context);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				output.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static String getCurrentTime() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String time = sdf.format(new Date());
+		return time;
 	}
 	
 }

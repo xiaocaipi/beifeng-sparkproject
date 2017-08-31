@@ -19,6 +19,7 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
 	@Override
 	public void updateBatch(List<AdUserClickCount> adUserClickCounts) {
 		JDBCHelper jdbcHelper = JDBCHelper.getInstance();
+		JDBCHelper.writeThread(this.getClass().getName(),"updateBatch",Thread.currentThread().getName());
 		
 		// 首先对用户广告点击量进行分类，分成待插入的和待更新的
 		List<AdUserClickCount> insertAdUserClickCounts = new ArrayList<AdUserClickCount>();
@@ -33,7 +34,8 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
 			
 			selectParams = new Object[]{adUserClickCount.getDate(), 
 					adUserClickCount.getUserid(), adUserClickCount.getAdid()};
-			
+			JDBCHelper.writeThread(this.getClass().getName(),"updateBatch :foreach ",Thread.currentThread().getName());
+
 			jdbcHelper.executeQuery(selectSQL, selectParams, new JDBCHelper.QueryCallback() {
 				
 				@Override
@@ -65,7 +67,7 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
 					adUserClickCount.getClickCount()};  
 			insertParamsList.add(insertParams);
 		}
-		
+		JDBCHelper.writeThread(this.getClass().getName(),"updateBatch :inserst sql ",Thread.currentThread().getName());
 		jdbcHelper.executeBatch(insertSQL, insertParamsList);
 		
 		// 执行批量更新

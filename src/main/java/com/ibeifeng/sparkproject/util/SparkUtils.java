@@ -28,7 +28,7 @@ public class SparkUtils {
 	public static void setMaster(SparkConf conf) {
 		boolean local = ConfigurationManager.getBoolean(Constants.SPARK_LOCAL);
 		if(local) {
-			conf.setMaster("local");  
+			conf.setMaster("local[4]");
 		}  
 	}
 	

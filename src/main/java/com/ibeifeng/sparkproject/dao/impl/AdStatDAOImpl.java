@@ -78,7 +78,6 @@ public class AdStatDAOImpl implements IAdStatDAO {
 		
 		// 对于需要更新的数据，执行批量更新操作
 		String updateSQL = "UPDATE ad_stat SET click_count=? "
-				+ "FROM ad_stat "
 				+ "WHERE date=? "
 				+ "AND province=? "
 				+ "AND city=? "

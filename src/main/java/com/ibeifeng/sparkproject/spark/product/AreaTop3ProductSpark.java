@@ -133,7 +133,7 @@ public class AreaTop3ProductSpark {
 				"SELECT "
 					+ "city_id,"
 					+ "click_product_id product_id "
-				+ "FROM sale.user_visit_action "
+				+ "FROM sparkproject.user_visit_action "
 				+ "WHERE click_product_id IS NOT NULL "			
 				+ "AND date>='" + startDate + "' "
 				+ "AND date<='" + endDate + "'";

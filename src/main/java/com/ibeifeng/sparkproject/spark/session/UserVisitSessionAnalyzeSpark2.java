@@ -1,60 +1,32 @@
 package com.ibeifeng.sparkproject.spark.session;
 
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Optional;
+import com.ibeifeng.sparkproject.conf.ConfigurationManager;
+import com.ibeifeng.sparkproject.constant.Constants;
+import com.ibeifeng.sparkproject.dao.*;
+import com.ibeifeng.sparkproject.dao.factory.DAOFactory;
+import com.ibeifeng.sparkproject.domain.*;
+import com.ibeifeng.sparkproject.test.MockData;
+import com.ibeifeng.sparkproject.util.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import org.apache.spark.Accumulator;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.api.java.function.*;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.hive.HiveContext;
 import org.apache.spark.storage.StorageLevel;
-
 import scala.Tuple2;
 
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.base.Optional;
-import com.ibeifeng.sparkproject.conf.ConfigurationManager;
-import com.ibeifeng.sparkproject.constant.Constants;
-import com.ibeifeng.sparkproject.dao.ISessionAggrStatDAO;
-import com.ibeifeng.sparkproject.dao.ISessionDetailDAO;
-import com.ibeifeng.sparkproject.dao.ISessionRandomExtractDAO;
-import com.ibeifeng.sparkproject.dao.ITaskDAO;
-import com.ibeifeng.sparkproject.dao.ITop10CategoryDAO;
-import com.ibeifeng.sparkproject.dao.ITop10SessionDAO;
-import com.ibeifeng.sparkproject.dao.factory.DAOFactory;
-import com.ibeifeng.sparkproject.domain.SessionAggrStat;
-import com.ibeifeng.sparkproject.domain.SessionDetail;
-import com.ibeifeng.sparkproject.domain.SessionRandomExtract;
-import com.ibeifeng.sparkproject.domain.Task;
-import com.ibeifeng.sparkproject.domain.Top10Category;
-import com.ibeifeng.sparkproject.domain.Top10Session;
-import com.ibeifeng.sparkproject.test.MockData;
-import com.ibeifeng.sparkproject.util.DateUtils;
-import com.ibeifeng.sparkproject.util.NumberUtils;
-import com.ibeifeng.sparkproject.util.ParamUtils;
-import com.ibeifeng.sparkproject.util.SparkUtils;
-import com.ibeifeng.sparkproject.util.StringUtils;
-import com.ibeifeng.sparkproject.util.ValidUtils;
+import java.util.*;
 
 /**
  * 用户访问session分析Spark作业
@@ -84,13 +56,13 @@ import com.ibeifeng.sparkproject.util.ValidUtils;
  *
  */
 @SuppressWarnings("unused")
-public class UserVisitSessionAnalyzeSpark {
+public class UserVisitSessionAnalyzeSpark2 {
 	
 	public static void main(String[] args) {
 		// 构建Spark上下文
 		SparkConf conf = new SparkConf()
 				.setAppName(Constants.SPARK_APP_NAME_SESSION)
-//				.set("spark.default.parallelism", "100")
+				.set("spark.default.parallelism", "4")
 				.set("spark.storage.memoryFraction", "0.5")  
 				.set("spark.shuffle.consolidateFiles", "true")
 				.set("spark.shuffle.file.buffer", "64")  
@@ -122,14 +94,14 @@ public class UserVisitSessionAnalyzeSpark {
 		ITaskDAO taskDAO = DAOFactory.getTaskDAO();
 		
 		// 首先得查询出来指定的任务，并获取任务的查询参数
-		long taskid = ParamUtils.getTaskIdFromArgs(args, Constants.SPARK_LOCAL_TASKID_SESSION);
-		Task task = taskDAO.findById(taskid);
-		if(task == null) {
-			System.out.println(new Date() + ": cannot find this task with id [" + taskid + "].");  
-			return;
-		}
-		
-		JSONObject taskParam = JSONObject.parseObject(task.getTaskParam());
+//		long taskid = ParamUtils.getTaskIdFromArgs(args, Constants.SPARK_LOCAL_TASKID_SESSION);
+//		Task task = taskDAO.findById(taskid);
+//		if(task == null) {
+//			System.out.println(new Date() + ": cannot find this task with id [" + taskid + "].");
+//			return;
+//		}
+		String params = "{\"startAge\":[\"10\"],\"endAge\":[\"50\"],\"startDate\":[\"2017-08-25\"],\"endDate\":[\"2017-08-28\"]}";
+		JSONObject taskParam = JSONObject.parseObject(params);
 		
 		// 如果要进行session粒度的数据聚合
 		// 首先要从user_visit_action表中，查询出来指定日期范围内的行为数据
@@ -194,7 +166,9 @@ public class UserVisitSessionAnalyzeSpark {
 		 */
 		JavaPairRDD<String, Row> sessionid2detailRDD = getSessionid2detailRDD(
 				filteredSessionid2AggrInfoRDD, sessionid2actionRDD);
-		sessionid2detailRDD = sessionid2detailRDD.persist(StorageLevel.MEMORY_ONLY());
+		long value = sessionid2detailRDD.count();
+		System.out.print(value);
+//		sessionid2detailRDD = sessionid2detailRDD.persist(StorageLevel.MEMORY_ONLY());
 		
 		/**
 		 * 对于Accumulator这种分布式累加计算的变量的使用，有一个重要说明
@@ -212,8 +186,8 @@ public class UserVisitSessionAnalyzeSpark {
 		 * 计算出来的结果，在J2EE中，是怎么显示的，是用两张柱状图显示
 		 */
 		
-		randomExtractSession(sc, task.getTaskid(), 
-				filteredSessionid2AggrInfoRDD, sessionid2detailRDD);
+//		randomExtractSession(sc, task.getTaskid(),
+//				filteredSessionid2AggrInfoRDD, sessionid2detailRDD);
 		
 		/**
 		 * 特别说明
@@ -224,8 +198,8 @@ public class UserVisitSessionAnalyzeSpark {
 		 */
 		
 		// 计算出各个范围的session占比，并写入MySQL
-		calculateAndPersistAggrStat(sessionAggrStatAccumulator.value(),
-				task.getTaskid());
+//		calculateAndPersistAggrStat(sessionAggrStatAccumulator.value(),
+//				task.getTaskid());
 		
 		/**
 		 * session聚合统计（统计出访问时长和访问步长，各个区间的session数量占总session数量的比例）
@@ -280,12 +254,12 @@ public class UserVisitSessionAnalyzeSpark {
 		 */
 		
 		// 获取top10热门品类
-		List<Tuple2<CategorySortKey, String>> top10CategoryList = 
-				getTop10Category(task.getTaskid(), sessionid2detailRDD);
-		
-		// 获取top10活跃session
-		getTop10Session(sc, task.getTaskid(), 
-				top10CategoryList, sessionid2detailRDD);
+//		List<Tuple2<CategorySortKey, String>> top10CategoryList =
+//				getTop10Category(task.getTaskid(), sessionid2detailRDD);
+//
+//		// 获取top10活跃session
+//		getTop10Session(sc, task.getTaskid(),
+//				top10CategoryList, sessionid2detailRDD);
 		
 		// 关闭Spark上下文
 		sc.close(); 
